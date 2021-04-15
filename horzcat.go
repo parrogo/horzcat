@@ -68,20 +68,43 @@ func Concat(opt Options, sources ...io.Reader) error {
 		bufreaders[idx] = bufio.NewScanner(source)
 	}
 
-	source := bufreaders[0]
-
-	for {
-		sourceok := source.Scan()
-		if !sourceok {
-			break
+	lines := make([][]byte, len(sources))
+	empty := make([]byte, 0)
+	allSourcesDone := false
+	for !allSourcesDone {
+		allSourcesDone = true
+		for idx, source := range bufreaders {
+			if source.Scan() {
+				allSourcesDone = false
+				lines[idx] = source.Bytes()
+			} else {
+				lines[idx] = empty
+			}
 		}
 
-		_, err := out.Write(source.Bytes())
-		if err != nil {
-			return err
+		if allSourcesDone {
+			continue
 		}
 
-		_, err = out.WriteString(opt.Tail + "\n")
+		somethingWritten := false
+		for _, line := range lines {
+			if len(line) == 0 {
+				continue
+			}
+			if somethingWritten {
+				_, err := out.WriteString(opt.Sep)
+				if err != nil {
+					return err
+				}
+			}
+			_, err := out.Write(line)
+			if err != nil {
+				return err
+			}
+			somethingWritten = true
+		}
+
+		_, err := out.WriteString(opt.Tail + "\n")
 		if err != nil {
 			return err
 		}

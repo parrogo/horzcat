@@ -1,6 +1,5 @@
 package horzcat_test
 
-/*
 import (
 	"bytes"
 	"embed"
@@ -28,7 +27,7 @@ func ExampleConcat() {
 	err := horzcat.Concat(horzcat.Options{
 		Sep:  ",",
 		Tail: "!",
-	})
+	}, &buf1, &buf2)
 	if err != nil {
 		panic(err)
 	}
@@ -36,6 +35,5 @@ func ExampleConcat() {
 	// salve,Parro!
 	// The end!
 }
-*/
 
 // # TODO: enable example tests

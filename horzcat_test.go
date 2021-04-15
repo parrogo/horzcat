@@ -49,4 +49,26 @@ func TestConcat(t *testing.T) {
 		require.Equal(expected, actual)
 	})
 
+	t.Run("Append opt.Tail & opt.Sep with multiple source readers", func(t *testing.T) {
+		require := require.New(t)
+
+		source1, err := fixtureFS.Open("lines1.txt")
+		require.NoError(err)
+		source2, err := fixtureFS.Open("lines2.txt")
+		require.NoError(err)
+
+		var buf bytes.Buffer
+		err = Concat(Options{
+			Tail:   "😎",
+			Sep:    " ",
+			Target: &buf,
+		}, source1, source2)
+		require.NoError(err)
+
+		actual := buf.String()
+		expected := "ciao Andre😎\nsalve Parro😎\nThe end😎\n"
+
+		require.Equal(expected, actual)
+	})
+
 }
