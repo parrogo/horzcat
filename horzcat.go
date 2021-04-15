@@ -10,7 +10,12 @@
 //   c d 3 4
 package horzcat
 
-import "io"
+import (
+	"bufio"
+	"errors"
+	"io"
+	"os"
+)
 
 // Options struct groups all options
 // accepted by Concat.
@@ -48,5 +53,44 @@ type Options struct {
 // String opt.Sep is added between lines
 // String opt.Tail is added at the end of every written line.
 func Concat(opt Options, sources ...io.Reader) error {
+	if len(sources) == 0 {
+		return errors.New("no source readers provided")
+	}
+	var out *bufio.Writer
+	if opt.Target != nil {
+		out = bufio.NewWriter(opt.Target)
+	} else {
+		out = bufio.NewWriter(os.Stdout)
+	}
+
+	bufreaders := make([]*bufio.Scanner, len(sources))
+	for idx, source := range sources {
+		bufreaders[idx] = bufio.NewScanner(source)
+	}
+
+	source := bufreaders[0]
+
+	for {
+		sourceok := source.Scan()
+		if !sourceok {
+			break
+		}
+
+		_, err := out.Write(source.Bytes())
+		if err != nil {
+			return err
+		}
+
+		_, err = out.WriteString(opt.Tail + "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	err := out.Flush()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
