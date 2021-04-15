@@ -4,7 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"testing"
-	
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,13 +12,13 @@ import (
 var fixtureRootFS embed.FS
 var fixtureFS, _ = fs.Sub(fixtureRootFS, "fixtures")
 
-func TestPeriod(t *testing.T) {
-	content,err := fs.ReadFile(fixtureFS, "placeholder")
-	if assert.NoError(t,err) {
+func TestPlaceholder(t *testing.T) {
+	content, err := fs.ReadFile(fixtureFS, "placeholder")
+	if assert.NoError(t, err) {
 		assert.Equal(t, "this is a placeholder", string(content))
 	}
 }
 
 func TestFunc(t *testing.T) {
-	assert.Equal(t, 42, Func())
+	assert.Equal(t, nil, Concat(Options{}))
 }

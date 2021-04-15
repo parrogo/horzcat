@@ -38,8 +38,6 @@
 </a>
 </div>
 
-
-
 # Documentation
 
 * See [examples](examples_test.go) of use.
