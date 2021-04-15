@@ -13,6 +13,7 @@ package horzcat
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -71,6 +72,11 @@ func Concat(opt Options, sources ...io.Reader) error {
 	lines := make([][]byte, len(sources))
 	empty := make([]byte, 0)
 	allSourcesDone := false
+
+	outWriteErr := func(err error) error {
+		return fmt.Errorf("cannot write to output: %w", err)
+	}
+
 	for !allSourcesDone {
 		allSourcesDone = true
 		for idx, source := range bufreaders {
@@ -94,32 +100,56 @@ func Concat(opt Options, sources ...io.Reader) error {
 			if somethingWritten {
 				_, err := out.WriteString(opt.Sep)
 				if err != nil {
-					return err
+					return outWriteErr(err)
 				}
 			}
 			_, err := out.Write(line)
 			if err != nil {
-				return err
+				return outWriteErr(err)
 			}
 			somethingWritten = true
 		}
 
 		_, err := out.WriteString(opt.Tail + "\n")
 		if err != nil {
-			return err
+			return outWriteErr(err)
 		}
 	}
 
 	err := out.Flush()
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot flush output: %w", err)
 	}
 
-	for _, source := range bufreaders {
+	for idx, source := range bufreaders {
 		if err := source.Err(); err != nil {
-			return err
+			return fmt.Errorf("error reading from source %d: %w", idx, InputError{err, idx})
 		}
 	}
 
 	return nil
+}
+
+// InputError wraps an error
+// in order to include the position
+// of failing stream.
+type InputError struct {
+	err error
+	idx int
+}
+
+// Error implements error interface
+func (e InputError) Error() string {
+	return e.err.Error()
+}
+
+// Unwrap returns the wrapped error
+func (e InputError) Unwrap() error {
+	return e.err
+}
+
+// Convert returns an error that include the
+// name of the file that causes the failure
+func (e InputError) Convert(filenames []string) error {
+	return fmt.Errorf("Cannot read file %s: %w", filenames[e.idx], e.err)
 }

@@ -3,6 +3,8 @@ package horzcat
 import (
 	"bytes"
 	"embed"
+	"errors"
+	"io"
 	"io/fs"
 	"testing"
 
@@ -21,6 +23,15 @@ func TestPlaceholder(t *testing.T) {
 	}
 }
 
+type FailingReader struct {
+}
+
+func (w FailingReader) Read(but []byte) (int, error) {
+	return 0, errors.New("expected error")
+}
+
+var _ io.Reader = FailingReader{}
+
 func TestConcat(t *testing.T) {
 	//assert := assert.New(t)
 
@@ -29,6 +40,28 @@ func TestConcat(t *testing.T) {
 
 		err := Concat(Options{})
 		require.EqualError(err, "no source readers provided")
+	})
+
+	t.Run("InputError can be converted to include filenames", func(t *testing.T) {
+		origErr := errors.New("expected error")
+		err := InputError{origErr, 1}
+		msg := err.Convert([]string{"file1", "file2", "file3"})
+		assert.Equal(t, "Cannot read file file2: expected error", msg.Error())
+	})
+
+	t.Run("Return InputError on failing readers", func(t *testing.T) {
+		require := require.New(t)
+		source1, err := fixtureFS.Open("lines1.txt")
+		require.NoError(err)
+
+		err = Concat(Options{
+			Target: io.Discard,
+		}, source1, FailingReader{})
+		require.EqualError(err, "error reading from source 1: expected error")
+		var idxErr InputError
+		require.ErrorAs(err, &idxErr)
+
+		require.Equal(1, idxErr.idx)
 	})
 
 	t.Run("Append opt.Tail with 1 source reader alone", func(t *testing.T) {

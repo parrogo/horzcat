@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -45,9 +46,9 @@ func main() {
 		fmt.Println(Version)
 		os.Exit(0)
 	}
-
-	sources := make([]io.Reader, len(flag.Args()))
-	for idx, arg := range flag.Args() {
+	filenames := flag.Args()
+	sources := make([]io.Reader, len(filenames))
+	for idx, arg := range filenames {
 		f, err := os.Open(arg)
 		fatal(err)
 		sources[idx] = f
@@ -71,5 +72,11 @@ func main() {
 	}
 
 	err := horzcat.Concat(opt, sources...)
-	fatal(err)
+	if err != nil {
+		var ierr horzcat.InputError
+		if errors.As(err, &ierr) {
+			err = ierr.Convert(filenames)
+		}
+		fatal(err)
+	}
 }
