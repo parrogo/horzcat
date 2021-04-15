@@ -115,5 +115,11 @@ func Concat(opt Options, sources ...io.Reader) error {
 		return err
 	}
 
+	for _, source := range bufreaders {
+		if err := source.Err(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
