@@ -83,14 +83,13 @@ func Concat(opt Options, sources ...io.Reader) error {
 
 	lines := make([][]byte, len(sources))
 	empty := make([]byte, 0)
-	allSourcesDone := false
 
 	outWriteErr := func(err error) error {
 		return fmt.Errorf("cannot write to output: %w", err)
 	}
 
-	for !allSourcesDone {
-		allSourcesDone = true
+	for {
+		allSourcesDone := true
 		for idx, source := range bufreaders {
 			if source.Scan() {
 				allSourcesDone = false
@@ -101,15 +100,16 @@ func Concat(opt Options, sources ...io.Reader) error {
 		}
 
 		if allSourcesDone {
-			continue
+			break
 		}
 
-		somethingWritten := false
+		firstReaderWritten := false
 		for _, line := range lines {
 			if len(line) == 0 {
 				continue
 			}
-			if somethingWritten {
+
+			if firstReaderWritten {
 				_, err := out.WriteString(opt.Sep)
 				if err != nil {
 					return outWriteErr(err)
@@ -121,11 +121,12 @@ func Concat(opt Options, sources ...io.Reader) error {
 					line = line[opt.RowHeaderLen:]
 				}
 			}
+
 			_, err := out.Write(line)
 			if err != nil {
 				return outWriteErr(err)
 			}
-			somethingWritten = true
+			firstReaderWritten = true
 		}
 
 		_, err := out.WriteString(opt.Tail + "\n")
