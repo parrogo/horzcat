@@ -92,8 +92,8 @@ func TestConcat(t *testing.T) {
 
 		var buf bytes.Buffer
 		err = Concat(Options{
-			ColumnHeaderLen: 2,
-			Target:          &buf,
+			RowHeaderLen: 2,
+			Target:       &buf,
 		}, source1, source2)
 		require.NoError(err)
 

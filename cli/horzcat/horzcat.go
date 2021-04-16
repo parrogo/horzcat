@@ -21,10 +21,11 @@ func fatal(err error) {
 }
 
 var options struct {
-	version bool
-	sep     string
-	tail    string
-	out     string
+	version      bool
+	sep          string
+	tail         string
+	out          string
+	rowheaderlen int
 }
 
 func usage(msg string) {
@@ -39,6 +40,7 @@ func main() {
 	flag.StringVar(&options.sep, "s", "", "separator added between lines.")
 	flag.StringVar(&options.tail, "t", "", "tail string add at end of every concateneted line.")
 	flag.StringVar(&options.out, "out", "", "name of output file. Defaults to stdout.")
+	flag.IntVar(&options.rowheaderlen, "rh", 0, "length of row header, if present")
 
 	flag.Parse()
 
@@ -58,8 +60,9 @@ func main() {
 	}
 
 	opt := horzcat.Options{
-		Sep:  options.sep,
-		Tail: options.tail,
+		Sep:          options.sep,
+		Tail:         options.tail,
+		RowHeaderLen: options.rowheaderlen,
 	}
 
 	if options.out != "" {
