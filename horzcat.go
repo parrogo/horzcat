@@ -66,7 +66,10 @@ func Concat(opt Options, sources ...io.Reader) error {
 
 	bufreaders := make([]*bufio.Scanner, len(sources))
 	for idx, source := range sources {
-		bufreaders[idx] = bufio.NewScanner(source)
+		lineScan := bufio.NewScanner(source)
+		buf := make([]byte, 0, 10*1024*1024)
+		lineScan.Buffer(buf, 10*1024*1024)
+		bufreaders[idx] = lineScan
 	}
 
 	lines := make([][]byte, len(sources))
