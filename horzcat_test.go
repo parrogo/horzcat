@@ -82,6 +82,27 @@ func TestConcat(t *testing.T) {
 		require.Equal(expected, actual)
 	})
 
+	t.Run("Skip column headers", func(t *testing.T) {
+		require := require.New(t)
+
+		source1, err := fixtureFS.Open("lines1.txt")
+		require.NoError(err)
+		source2, err := fixtureFS.Open("lines3.txt")
+		require.NoError(err)
+
+		var buf bytes.Buffer
+		err = Concat(Options{
+			ColumnHeaderLen: 2,
+			Target:          &buf,
+		}, source1, source2)
+		require.NoError(err)
+
+		actual := buf.String()
+		expected := "ciaodre\nsalveP\nThe end\n"
+
+		require.Equal(expected, actual)
+	})
+
 	t.Run("Append opt.Tail & opt.Sep with multiple source readers", func(t *testing.T) {
 		require := require.New(t)
 

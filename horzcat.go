@@ -40,11 +40,20 @@ import (
 // one or more reader are still concatened and written
 // to output. Sep string is added alone for each of the
 // readers that miss one or more lines.
+//
+// ColumnHeaderLen could be set to the lenght,
+// in bytes, of the column header.
+// If > 0, ColumnHeaderLen bytes will be skipped
+// from each source reader except the first.
+// When first reader have less lines than the others,
+// column header is always kept for the first
+// reader that has lines.
 type Options struct {
-	Target         io.Writer
-	Sep            string
-	Tail           string
-	SameLinesCount bool
+	Target          io.Writer
+	Sep             string
+	Tail            string
+	SameLinesCount  bool
+	ColumnHeaderLen int
 }
 
 // Concat read lines from all io.Reader in sources,
@@ -104,6 +113,12 @@ func Concat(opt Options, sources ...io.Reader) error {
 				_, err := out.WriteString(opt.Sep)
 				if err != nil {
 					return outWriteErr(err)
+				}
+
+				if opt.ColumnHeaderLen > 0 && len(line) >= opt.ColumnHeaderLen {
+					// strip column header from readers
+					// after the first.
+					line = line[opt.ColumnHeaderLen:]
 				}
 			}
 			_, err := out.Write(line)
